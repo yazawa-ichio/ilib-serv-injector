@@ -1,0 +1,16 @@
+{
+    "name": "ILib.ServInjectorTest",
+    "references": [
+        "ILib.ServInjector"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": []
+}
