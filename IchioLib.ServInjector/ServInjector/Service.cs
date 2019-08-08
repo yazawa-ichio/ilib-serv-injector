@@ -5,6 +5,9 @@ using UnityEngine;
 
 namespace ILib.ServInject
 {
+	/// <summary>
+	/// Tにサービスとして登録するインタフェースを指定してください。
+	/// </summary>
 	public abstract class Service<T> : IDisposable where T : class
 	{
 		public Service()

@@ -8,20 +8,18 @@ namespace ILib.ServInject
 {
 	public static class ServInjector
 	{
-		class Entry
-		{
-			public PropertyInfo[] Properties;
-			public IHolder[] Holders;
-		}
-
 		static Dictionary<Type, IHolder> s_Holder = new Dictionary<Type, IHolder>();
-		static Dictionary<Type, Entry> s_InjectEntry = new Dictionary<Type, Entry>();
+		static Dictionary<Type, InjectEntry> s_InjectEntry = new Dictionary<Type, InjectEntry>();
 
 		internal static void Register<T>(Holder<T> holder) where T : class
 		{
 			s_Holder.Add(typeof(T), holder);
 		}
 
+		/// <summary>
+		/// サービスを登録します。
+		/// 解放する際はUnbindを実行してください。
+		/// </summary>
 		public static void Bind<T>(object service) where T : class
 		{
 			Holder<T>.Instance.Service = (T)service;
@@ -31,6 +29,27 @@ namespace ILib.ServInject
 			}
 		}
 
+		/// <summary>
+		/// サービスを登録します。
+		/// 指定のゲームオブジェクトが削除された際に自動でUnbindされます。
+		/// </summary>
+		public static void BindAndObserveDestroy<T>(MonoBehaviour service, GameObject obj = null) where T : MonoBehaviour
+		{
+			var behavior = Holder<T>.Instance.Service = (T)service;
+			if (service is IServiceEventReceiver eventReceiver)
+			{
+				eventReceiver.OnBind();
+			}
+			var observer = obj ?? behavior.gameObject;
+			observer.AddComponent<DestroyObserver>().OnDestroyEvent = () =>
+			{
+				Unbind<T>(service);
+			};
+		}
+		
+		/// <summary>
+		/// サービスの登録を解除します。
+		/// </summary>
 		public static void Unbind<T>(object service) where T : class
 		{
 			if (Holder<T>.Instance.Service == service)
@@ -43,61 +62,9 @@ namespace ILib.ServInject
 			}
 		}
 
-		public static T Resolve<T>() where T : class
-		{
-			return Holder<T>.Instance.Service;
-		}
-
-		public static void Inject(object obj)
-		{
-			Inject(obj.GetType(), obj);
-		}
-
-		public static void Inject(Type type, object obj)
-		{
-			Entry entry;
-			if (!s_InjectEntry.TryGetValue(type, out entry))
-			{
-				s_InjectEntry[type] = entry = new Entry();
-				entry.Holders = GetInjectors(type).ToArray();
-				if (entry.Holders.Length == 0) entry.Holders = null;
-				entry.Properties = GetPropertyInfos(type).ToArray();
-				if (entry.Properties.Length == 0) entry.Properties = null;
-			}
-			if (entry.Holders != null)
-			{
-				foreach (var item in entry.Holders)
-				{
-					item.Inject(obj);
-				}
-			}
-			if (entry.Properties != null)
-			{
-				foreach (var item in entry.Properties)
-				{
-					IHolder holder;
-					if (s_Holder.TryGetValue(item.PropertyType, out holder))
-					{
-						holder.Inject(item, obj);
-					}
-				}
-			}
-		}
-
-		public static T Create<T>(Type type = null) where T : class, new()
-		{
-			T item = new T();
-			Inject(type ?? typeof(T), item);
-			return item;
-		}
-
-		public static T AddComponent<T>(GameObject obj, Type type = null) where T : MonoBehaviour, new()
-		{
-			T item = obj.AddComponent<T>();
-			Inject(type ?? typeof(T), item);
-			return item;
-		}
-
+		/// <summary>
+		/// 登録されているすべてのサービスを解除します。
+		/// </summary>
 		public static void Clear()
 		{
 			foreach (var item in s_Holder.Values)
@@ -106,27 +73,57 @@ namespace ILib.ServInject
 			}
 		}
 
-		static IEnumerable<IHolder> GetInjectors(Type type)
+		/// <summary>
+		/// 登録されているサービスを取り出します。
+		/// 登録されていない場合にnullが返ります。
+		/// </summary>
+		public static T Resolve<T>() where T : class
 		{
-			foreach (var item in s_Holder.Values)
-			{
-				if (item.IsTarget(type))
-				{
-					yield return item;
-				}
-			}
+			return Holder<T>.Instance.Service;
 		}
 
-		static IEnumerable<PropertyInfo> GetPropertyInfos(Type type)
+		/// <summary>
+		/// サービスを注入します。
+		/// </summary>
+		public static void Inject(object obj)
 		{
-			foreach (var prop in type.GetProperties(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public))
-			{
-				if (Attribute.IsDefined(prop, typeof(InjectAttribute), true))
-				{
-					yield return prop;
-				}
-			}
+			Inject(obj.GetType(), obj);
 		}
+
+		/// <summary>
+		/// 指定の方でサービスを注入します。
+		/// 基底クラスのみインジェクトされる場合に効率的です
+		/// </summary>
+		public static void Inject(Type type, object obj)
+		{
+			InjectEntry entry;
+			if (!s_InjectEntry.TryGetValue(type, out entry))
+			{
+				s_InjectEntry[type] = entry = new InjectEntry(type, s_Holder);
+			}
+			entry.Inject(obj);
+		}
+
+		/// <summary>
+		/// インスタンスを生成し、サービスを注入した状態で返します
+		/// </summary>
+		public static T Create<T>(Type type = null) where T : class, new()
+		{
+			T item = new T();
+			Inject(type ?? typeof(T), item);
+			return item;
+		}
+
+		/// <summary>
+		/// MonoBehaviourを追加し、サービスを注入した状態で返します
+		/// </summary>
+		public static T AddComponent<T>(GameObject obj, Type type = null) where T : MonoBehaviour, new()
+		{
+			T item = obj.AddComponent<T>();
+			Inject(type ?? typeof(T), item);
+			return item;
+		}
+
 
 	}
 }

@@ -33,6 +33,11 @@ class TestClientNest : TestClient
 {
 	[Inject]
 	public ITestService Service2 { get; set; }
+
+	public ITestService Service3 { get; set; }
+
+	[Inject]
+	public void Inject(ITestService service) => Service3 = service;
 }
 
 class TestServiceBehaviour :　ServiceMonoBehaviour<ITestService>, ITestService
@@ -117,10 +122,12 @@ public class ServInjectorTest
 		var nest = ServInjector.Create<TestClientNest>(typeof(TestClient));
 		Assert.AreEqual(nest.Service.Name, typeof(TestService2).Name);
 		Assert.AreNotEqual(nest.Service, nest.Service2);
+		Assert.AreNotEqual(nest.Service, nest.Service3);
 
-		//型を指定していないので継承先のプロパティにインジェクトされる
+		//型を指定していないので継承先のプロパティ・メソッドにインジェクトされる
 		ServInjector.Inject(nest);
 		Assert.AreEqual(nest.Service, nest.Service2);
+		Assert.AreEqual(nest.Service, nest.Service3);
 
 	}
 

@@ -7,6 +7,7 @@ namespace ILib.ServInject
 		bool IsTarget(System.Type type);
 		void Inject(object obj);
 		void Inject(PropertyInfo item, object obj);
+		object Get();
 		void Clear();
 	}
 
@@ -37,6 +38,11 @@ namespace ILib.ServInject
 		public void Inject(PropertyInfo item, object obj)
 		{
 			item.SetValue(obj, Service);
+		}
+
+		public object Get()
+		{
+			return Service;
 		}
 
 		public void Clear()
