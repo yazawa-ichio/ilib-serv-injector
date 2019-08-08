@@ -1,4 +1,5 @@
-﻿using System;
+﻿//#define ILIB_DISABLE_SERV_REFLECTION_INJECT
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Linq;
@@ -8,6 +9,11 @@ namespace ILib.ServInject
 {
 	internal class InjectEntry
 	{
+
+		Dictionary<Type, IHolder> m_Holder;
+		IHolder[] m_Injectors;
+
+#if !ILIB_DISABLE_SERV_REFLECTION_INJECT
 		class MethodEntry
 		{
 			public MethodInfo Method;
@@ -32,18 +38,18 @@ namespace ILib.ServInject
 			}
 			return ret;
 		}
-
-		Dictionary<Type, IHolder> m_Holder;
 		PropertyInfo[] m_Properties;
-		IHolder[] m_Injectors;
 		MethodEntry[] m_Methods;
+#endif
 
 		public InjectEntry(Type type, Dictionary<Type, IHolder> holder)
 		{
 			m_Holder = holder;
 			m_Injectors = GetInjectors(type).ToArray();
+#if !ILIB_DISABLE_SERV_REFLECTION_INJECT
 			m_Properties = GetPropertyInfos(type).ToArray();
 			m_Methods = GetMethodEntry(type).ToArray();
+#endif
 		}
 
 		public void Inject(object obj)
@@ -53,6 +59,7 @@ namespace ILib.ServInject
 				IHolder item = m_Injectors[i];
 				item.Inject(obj);
 			}
+#if !ILIB_DISABLE_SERV_REFLECTION_INJECT
 			for (int i = 0; i < m_Properties.Length; i++)
 			{
 				PropertyInfo item = m_Properties[i];
@@ -77,6 +84,7 @@ namespace ILib.ServInject
 				item.Method.Invoke(obj, value);
 				Array.Clear(value, 0, value.Length);
 			}
+#endif
 		}
 
 		IEnumerable<IHolder> GetInjectors(Type type)
@@ -90,6 +98,7 @@ namespace ILib.ServInject
 			}
 		}
 
+#if !ILIB_DISABLE_SERV_REFLECTION_INJECT
 		IEnumerable<PropertyInfo> GetPropertyInfos(Type type)
 		{
 			foreach (var prop in type.GetProperties(BindingFlags.Instance | BindingFlags.Public))
@@ -114,7 +123,7 @@ namespace ILib.ServInject
 				}
 			}
 		}
-
+#endif
 
 	}
 

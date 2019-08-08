@@ -8,13 +8,13 @@ namespace ILib.ServInject
 	public abstract class ServiceMonoBehaviour<T> : MonoBehaviour where T : class
 	{
 
-		protected virtual void Awake()
+		void Awake()
 		{
 			ServInjector.Bind<T>(this);
 			OnAwake();
 		}
 
-		protected void OnAwake() { }
+		protected virtual void OnAwake() { }
 
 		protected void OnDestroy()
 		{
