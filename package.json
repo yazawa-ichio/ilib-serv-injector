@@ -1,8 +1,8 @@
 {
   "name": "jp.yazawa-ichio.ilib-serv-injector",
   "displayName":  "ILib.ServInjector",
-  "version": "0.1.2",
-  "unity": "2018.3",
+  "version": "0.1.3",
+  "unity": "2018.4",
   "description": "Unity Service Locater And Injector Package.",
   "keywords": [ "servicelocator" ],
   "Author": "yazawa-ichio (yazawa922473@gmail.com)",

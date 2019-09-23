@@ -33,14 +33,14 @@ namespace ILib.ServInject
 		/// サービスを登録します。
 		/// 指定のゲームオブジェクトが削除された際に自動でUnbindされます。
 		/// </summary>
-		public static void BindAndObserveDestroy<T>(MonoBehaviour service, GameObject obj = null) where T : MonoBehaviour
+		public static void BindAndObserveDestroy<T>(MonoBehaviour service, GameObject obj = null) where T : class
 		{
-			var behavior = Holder<T>.Instance.Service = (T)service;
+			Holder<T>.Instance.Service = (T)(service as object);
 			if (service is IServiceEventReceiver eventReceiver)
 			{
 				eventReceiver.OnBind();
 			}
-			var observer = obj ?? behavior.gameObject;
+			var observer = obj ?? service.gameObject;
 			observer.AddComponent<DestroyObserver>().OnDestroyEvent = () =>
 			{
 				Unbind<T>(service);
