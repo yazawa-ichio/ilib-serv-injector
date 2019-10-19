@@ -9,7 +9,6 @@ namespace ILib.ServInject
 {
 	internal class InjectEntry
 	{
-
 		Dictionary<Type, IHolder> m_Holder;
 		IHolder[] m_Injectors;
 
@@ -96,6 +95,19 @@ namespace ILib.ServInject
 					yield return item;
 				}
 			}
+		}
+
+		public void SetHolder(IHolder holder)
+		{
+			if (m_Injectors == null)
+			{
+				m_Injectors = new IHolder[1];
+			}
+			else
+			{
+				Array.Resize(ref m_Injectors, m_Injectors.Length + 1);
+			}
+			m_Injectors[m_Injectors.Length - 1] = holder;
 		}
 
 #if !ILIB_DISABLE_SERV_REFLECTION_INJECT

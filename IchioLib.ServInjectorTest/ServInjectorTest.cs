@@ -13,6 +13,12 @@ interface ITestService
 	string Name { get; }
 }
 
+interface IDelayService
+{
+
+}
+
+
 class TestService1 : Service<ITestService>, ITestService
 {
 	public string Name => typeof(TestService1).Name;
@@ -23,10 +29,17 @@ class TestService2 : ITestService
 	public string Name => typeof(TestService2).Name;
 }
 
-class TestClient : IInject<ITestService>
+class DelayService : IDelayService
+{
+
+}
+
+class TestClient : IInject<ITestService>, IInject<IDelayService>
 {
 	public ITestService Service;
+	public IDelayService Delay;
 	void IInject<ITestService>.Install(ITestService service) => Service = service;
+	void IInject<IDelayService>.Install(IDelayService service) => Delay = service;
 }
 
 class TestClientNest : TestClient
@@ -152,5 +165,23 @@ public class ServInjectorTest
 		{
 			GameObject.Destroy(obj);
 		}
+	}
+
+	[Test]
+	public void InjectDelayTest()
+	{
+		ServInjector.Clear();
+		ServInjector.Bind<ITestService>(new TestService1());
+		//型情報がメタ情報が作成される
+		var client = ServInjector.Create<TestClient>();
+		Assert.IsNotNull(client.Service);
+		Assert.IsNull(client.Delay);
+
+		//メタ情報が出来た後でも後からでもバインド出来る
+		ServInjector.Bind<IDelayService>(new DelayService());
+		client = ServInjector.Create<TestClient>();
+		Assert.IsNotNull(client.Service);
+		Assert.IsNotNull(client.Delay);
+
 	}
 }

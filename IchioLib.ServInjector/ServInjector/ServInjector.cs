@@ -14,6 +14,13 @@ namespace ILib.ServInject
 		internal static void Register<T>(Holder<T> holder) where T : class
 		{
 			s_Holder.Add(typeof(T), holder);
+			foreach (var kvp in s_InjectEntry)
+			{
+				if (holder.IsTarget(kvp.Key))
+				{
+					kvp.Value.SetHolder(holder);
+				}
+			}
 		}
 
 		/// <summary>
