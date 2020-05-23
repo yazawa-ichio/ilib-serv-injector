@@ -53,7 +53,7 @@ namespace ILib.ServInject
 				Unbind<T>(service);
 			};
 		}
-		
+
 		/// <summary>
 		/// サービスの登録を解除します。
 		/// </summary>

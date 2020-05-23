@@ -53,7 +53,7 @@ class TestClientNest : TestClient
 	public void Inject(ITestService service) => Service3 = service;
 }
 
-class TestServiceBehaviour :　ServiceMonoBehaviour<ITestService>, ITestService
+class TestServiceBehaviour : ServiceMonoBehaviour<ITestService>, ITestService
 {
 	public string Name => typeof(TestServiceBehaviour).Name;
 }
