@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Reflection;
-using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace ILib.ServInject
@@ -34,6 +34,7 @@ namespace ILib.ServInject
 			{
 				eventReceiver.OnBind();
 			}
+			Holder<T>.Instance.OnBind();
 		}
 
 		/// <summary>
@@ -47,6 +48,7 @@ namespace ILib.ServInject
 			{
 				eventReceiver.OnBind();
 			}
+			Holder<T>.Instance.OnBind();
 			var observer = obj ?? service.gameObject;
 			observer.AddComponent<DestroyObserver>().OnDestroyEvent = () =>
 			{
@@ -87,6 +89,28 @@ namespace ILib.ServInject
 		public static T Resolve<T>() where T : class
 		{
 			return Holder<T>.Instance.Service;
+		}
+
+		/// <summary>
+		/// 登録されているサービスを取り出します。
+		/// 登録されていない場合はBindされるまで待機します
+		/// </summary>
+		public static async Task<T> ResolveAsync<T>(CancellationToken token) where T : class
+		{
+			if (Holder<T>.Instance.Service != null)
+			{
+				return Holder<T>.Instance.Service;
+			}
+			return await Holder<T>.Instance.GetAsync(token);
+		}
+
+		/// <summary>
+		/// 登録されているサービスを取り出します。
+		/// 登録されていない場合はBindされるまで待機します
+		/// </summary>
+		public static Task<T> ResolveAsync<T>() where T : class
+		{
+			return ResolveAsync<T>(CancellationToken.None);
 		}
 
 		/// <summary>

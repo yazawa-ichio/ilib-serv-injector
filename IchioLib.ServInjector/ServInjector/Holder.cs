@@ -1,4 +1,7 @@
-﻿using System.Reflection;
+﻿using System.Collections.Generic;
+using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace ILib.ServInject
 {
@@ -16,6 +19,8 @@ namespace ILib.ServInject
 		public static Holder<T> Instance = new Holder<T>();
 
 		public T Service;
+
+		List<TaskCompletionSource<T>> m_Future = new List<TaskCompletionSource<T>>();
 
 		private Holder()
 		{
@@ -40,6 +45,16 @@ namespace ILib.ServInject
 			item.SetValue(obj, Service);
 		}
 
+		public void OnBind()
+		{
+			while (m_Future.Count > 0)
+			{
+				var fturue = m_Future[0];
+				m_Future.RemoveAt(0);
+				fturue.TrySetResult(Service);
+			}
+		}
+
 		public object Get()
 		{
 			return Service;
@@ -48,6 +63,21 @@ namespace ILib.ServInject
 		public void Clear()
 		{
 			Service = null;
+		}
+
+		public Task<T> GetAsync(CancellationToken token)
+		{
+			TaskCompletionSource<T> future = new TaskCompletionSource<T>();
+			if (token != CancellationToken.None)
+			{
+				token.Register(() =>
+				{
+					m_Future.Remove(future);
+					future.TrySetCanceled(token);
+				});
+			}
+			m_Future.Add(future);
+			return future.Task;
 		}
 	}
 }

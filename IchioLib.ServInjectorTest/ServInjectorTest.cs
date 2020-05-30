@@ -1,11 +1,11 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using ILib.ServInject;
+using NUnit.Framework;
+using System;
+using System.Collections;
+using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.TestTools;
-using UnityEngine.Assertions;
-
-using ILib.ServInject;
-using NUnit.Framework;
 using Assert = UnityEngine.Assertions.Assert;
 
 interface ITestService
@@ -183,5 +183,30 @@ public class ServInjectorTest
 		Assert.IsNotNull(client.Service);
 		Assert.IsNotNull(client.Delay);
 
+	}
+
+	[Test]
+	public void ResolveAsyncTest()
+	{
+		Task.Run(async () =>
+		{
+			ServInjector.Clear();
+			_ = Task.Run(async () =>
+			{
+				await Task.Delay(2000);
+				ServInjector.Bind<ITestService>(new TestService1());
+			});
+			Exception error = null;
+			try
+			{
+				var cancel = await ServInjector.ResolveAsync<ITestService>(new CancellationTokenSource(500).Token);
+				Assert.IsNull(cancel);
+			}
+			catch (Exception ex) { error = ex; }
+			Assert.IsNotNull(error);
+			Assert.IsNull(ServInjector.Resolve<ITestService>());
+			var service = await ServInjector.ResolveAsync<ITestService>();
+			Assert.IsNotNull(service);
+		}).Wait();
 	}
 }
